@@ -1,0 +1,863 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:WeatherForecast"
+             xmlns:chart="clr-namespace:Syncfusion.Maui.Charts;assembly=Syncfusion.Maui.Charts"
+             xmlns:listview="clr-namespace:Syncfusion.Maui.ListView;assembly=Syncfusion.Maui.ListView"
+             xmlns:tabview="clr-namespace:Syncfusion.Maui.TabView;assembly=Syncfusion.Maui.TabView"
+             xmlns:input="clr-namespace:Syncfusion.Maui.Inputs;assembly=Syncfusion.Maui.Inputs"
+             xmlns:gauge="clr-namespace:Syncfusion.Maui.Gauges;assembly=Syncfusion.Maui.Gauges"
+             xmlns:progressbar="clr-namespace:Syncfusion.Maui.ProgressBar;assembly=Syncfusion.Maui.ProgressBar"
+             xmlns:conv="clr-namespace:WeatherForecast"
+             xmlns:ptr="clr-namespace:Syncfusion.Maui.PullToRefresh;assembly=Syncfusion.Maui.PullToRefresh"
+             xmlns:core="clr-namespace:Syncfusion.Maui.Shimmer;assembly=Syncfusion.Maui.Core"
+             xmlns:badge="clr-namespace:Syncfusion.Maui.Core;assembly=Syncfusion.Maui.Core"
+             x:Class="WeatherForecast.WeatherDashboardPageMobile"
+             x:DataType="models:WeatherViewModel"
+             Shell.NavBarIsVisible="False"
+             Shell.TabBarIsVisible="False">
+
+    <!-- ═══════════════════════════════════  Safe Area  ═══════════════════════════════════ -->
+    <ContentPage.Padding>
+        <OnPlatform x:TypeArguments="Thickness">
+            <On Platform="iOS"
+                Value="0,47,0,0" />
+            <On Platform="Android"
+                Value="0,0,0,0" />
+        </OnPlatform>
+    </ContentPage.Padding>
+
+    <!-- ════════════════════════════════  Page Background  ═══════════════════════════════ -->
+    <ContentPage.Background>
+        <LinearGradientBrush StartPoint="0,0"
+                             EndPoint="0,1">
+            <GradientStop Color="#0B1C2D"
+                          Offset="0.0" />
+            <GradientStop Color="#0D2236"
+                          Offset="0.5" />
+            <GradientStop Color="#102A43"
+                          Offset="1.0" />
+        </LinearGradientBrush>
+    </ContentPage.Background>
+
+    <!-- ═══════════════════════════════════  Resources  ═══════════════════════════════════ -->
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <conv:PercentToRectConverter x:Key="PercentToRect" />
+
+            <!-- ── Colour tokens ────────────────────────────────────────────── -->
+            <Color x:Key="TextPrimary">#FFFFFF</Color>
+            <Color x:Key="TextSecondary">#8FA8C0</Color>
+            <Color x:Key="TextTertiary">#4A6580</Color>
+            <Color x:Key="Cyan">#38BDF8</Color>
+            <Color x:Key="CyanDim">#1A5F80</Color>
+            <Color x:Key="TempWhite">#F0F8FF</Color>
+            <Color x:Key="HighRed">#F87171</Color>
+            <Color x:Key="LowBlue">#60A5FA</Color>
+            <Color x:Key="HumidTeal">#2DD4BF</Color>
+            <Color x:Key="WindPurple">#A78BFA</Color>
+            <!-- Glass — explicit hex so Android doesn't misinterpret -->
+            <Color x:Key="GlassBg">#12FFFFFF</Color>
+            <Color x:Key="GlassBgStrong">#1AFFFFFF</Color>
+            <Color x:Key="GlassBorder">#20FFFFFF</Color>
+            <Color x:Key="GlassBorderStrong">#30FFFFFF</Color>
+            <Color x:Key="Overlay">#CC0B1C2D</Color>
+
+            <!-- ── Glass card ────────────────────────────────────────────────── -->
+            <Style x:Key="Card"
+                   TargetType="Border">
+                <Setter Property="BackgroundColor"
+                        Value="{StaticResource GlassBg}" />
+                <Setter Property="Stroke"
+                        Value="{StaticResource GlassBorder}" />
+                <Setter Property="StrokeThickness"
+                        Value="1" />
+                <Setter Property="StrokeShape"
+                        Value="RoundRectangle 20" />
+                <Setter Property="Padding"
+                        Value="16" />
+                <Setter Property="Margin"
+                        Value="20,0,20,16" />
+            </Style>
+
+            <!-- ── Stat card (3-up grid) ─────────────────────────────────────── -->
+            <Style x:Key="StatCard"
+                   TargetType="Border">
+                <Setter Property="BackgroundColor"
+                        Value="{StaticResource GlassBg}" />
+                <Setter Property="Stroke"
+                        Value="{StaticResource GlassBorder}" />
+                <Setter Property="StrokeThickness"
+                        Value="1" />
+                <Setter Property="StrokeShape"
+                        Value="RoundRectangle 20" />
+                <Setter Property="Padding"
+                        Value="0,14" />
+            </Style>
+
+            <!-- ── Section heading ──────────────────────────────────────────── -->
+            <Style x:Key="SectionHead"
+                   TargetType="Label">
+                <Setter Property="TextColor"
+                        Value="{StaticResource TextSecondary}" />
+                <Setter Property="FontSize"
+                        Value="14" />
+                <Setter Property="FontAttributes"
+                        Value="Bold" />
+                <Setter Property="CharacterSpacing"
+                        Value="1.8" />
+                <Setter Property="Margin"
+                        Value="20,24,20,10" />
+            </Style>
+
+            <!-- ── Hourly mini card ──────────────────────────────────────────── -->
+            <Style x:Key="HourlyCard"
+                   TargetType="Border">
+                <Setter Property="BackgroundColor"
+                        Value="{StaticResource GlassBg}" />
+                <Setter Property="Stroke"
+                        Value="{StaticResource GlassBorder}" />
+                <Setter Property="StrokeThickness"
+                        Value="1" />
+                <Setter Property="StrokeShape"
+                        Value="RoundRectangle 16" />
+                <Setter Property="Padding"
+                        Value="8,12" />
+                <Setter Property="Margin"
+                        Value="0,2,10,2" />
+            </Style>
+
+            <!-- ── Daily forecast row ───────────────────────────────────────── -->
+            <Style x:Key="DayCard"
+                   TargetType="Border">
+                <Setter Property="BackgroundColor"
+                        Value="{StaticResource GlassBg}" />
+                <Setter Property="Stroke"
+                        Value="{StaticResource GlassBorder}" />
+                <Setter Property="StrokeThickness"
+                        Value="1" />
+                <Setter Property="StrokeShape"
+                        Value="RoundRectangle 20" />
+                <Setter Property="Padding"
+                        Value="16,14" />
+            </Style>
+
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <!-- ═══════════════════════════════════  Root  ════════════════════════════════════════ -->
+    <Grid>
+        <!-- ─────────────────────────────────  TAB VIEW  ───────────────────────────────── -->
+        <tabview:SfTabView TabWidthMode="SizeToContent"
+                           TabBarBackground="Transparent"
+                           IndicatorBackground="{StaticResource Cyan}"
+                           IndicatorPlacement="Bottom">
+
+            <!-- ══════════════════════════════  TODAY TAB  ══════════════════════════════ -->
+            <tabview:SfTabItem Header="  Today  "
+                               TextColor="{StaticResource Cyan}"
+                               FontSize="13"
+                               FontAttributes="Bold">
+                <tabview:SfTabItem.Content>
+                    <ptr:SfPullToRefresh RefreshCommand="{Binding PullToRefreshCommand}"
+                                         IsRefreshing="{Binding IsRefreshing}"
+                                         ProgressColor="{StaticResource Cyan}"
+                                         ProgressThickness="4"
+                                         ProgressBackground="Transparent"
+                                         TransitionMode="SlideOnTop"
+                                         RefreshViewHeight="60"
+                                         RefreshViewWidth="60"
+                                         PullingThreshold="300"
+                                         RefreshViewThreshold="300">
+                        <ptr:SfPullToRefresh.PullableContent>
+
+                            <ScrollView>
+                                <VerticalStackLayout Spacing="0">
+
+                                    <!-- ═══════════════════  HERO  ═══════════════════════ -->
+                                    <Grid Padding="20,24,20,0">
+
+                                        <!-- Ambient glow orb behind emoji -->
+                                        <Ellipse HorizontalOptions="End"
+                                                 VerticalOptions="Start"
+                                                 WidthRequest="180"
+                                                 HeightRequest="180"
+                                                 Margin="0,10,0,0"
+                                                 Opacity="0.12">
+                                            <Ellipse.Fill>
+                                                <RadialGradientBrush Center="0.5,0.5"
+                                                                     Radius="0.5">
+                                                    <GradientStop Color="#38BDF8"
+                                                                  Offset="0" />
+                                                    <GradientStop Color="Transparent"
+                                                                  Offset="1" />
+                                                </RadialGradientBrush>
+                                            </Ellipse.Fill>
+                                        </Ellipse>
+
+                                        <VerticalStackLayout Spacing="0">
+
+                                            <!-- City + Updated -->
+                                            <Grid ColumnDefinitions="Auto,*,Auto"
+                                                  ColumnSpacing="6">
+                                                <Label Grid.Column="0"
+                                                       Text="📍"
+                                                       FontSize="13"
+                                                       VerticalOptions="Center"
+                                                       Opacity="0.6" />
+                                                <Label Grid.Column="1"
+                                                       Text="{Binding CityName}"
+                                                       TextColor="{StaticResource TextPrimary}"
+                                                       FontSize="15"
+                                                       FontAttributes="Bold"
+                                                       VerticalOptions="Center" />
+                                            </Grid>
+
+                                            <!-- Large temp + emoji -->
+                                            <Grid ColumnDefinitions="*,Auto"
+                                                  Margin="0,8,0,0">
+                                                <VerticalStackLayout Grid.Column="0"
+                                                                     Spacing="0">
+
+                                                    <!-- Temperature -->
+                                                    <Label Text="{Binding CurrentTempDisplay}"
+                                                           TextColor="{StaticResource TempWhite}"
+                                                           FontSize="80"
+                                                           FontAttributes="Bold"
+                                                           LineHeight="0.9"
+                                                           CharacterSpacing="-1" />
+
+                                                    <!-- Condition badge -->
+                                                    <Border BackgroundColor="{StaticResource GlassBgStrong}"
+                                                            Stroke="{StaticResource GlassBorderStrong}"
+                                                            StrokeThickness="1"
+                                                            StrokeShape="RoundRectangle 24"
+                                                            Padding="14,6"
+                                                            HorizontalOptions="Start"
+                                                            Margin="0,10,0,0">
+                                                        <Label Text="{Binding Description}"
+                                                               TextColor="{StaticResource TextPrimary}"
+                                                               FontSize="13"
+                                                               FontAttributes="Bold" />
+                                                    </Border>
+
+                                                    <!-- Feels like -->
+                                                    <Label Text="{Binding FeelsLikeDisplay}"
+                                                           TextColor="{StaticResource TextSecondary}"
+                                                           FontSize="13"
+                                                           Margin="0,10,0,0" />
+
+                                                    <!-- H / L -->
+                                                    <HorizontalStackLayout Spacing="10"
+                                                                           Margin="0,6,0,0">
+                                                        <Label Text="{Binding HighTempDisplay}"
+                                                               TextColor="{StaticResource HighRed}"
+                                                               FontSize="14"
+                                                               FontAttributes="Bold" />
+                                                        <Label Text="·"
+                                                               TextColor="{StaticResource TextTertiary}"
+                                                               FontSize="14" />
+                                                        <Label Text="{Binding LowTempDisplay}"
+                                                               TextColor="{StaticResource LowBlue}"
+                                                               FontSize="14"
+                                                               FontAttributes="Bold" />
+                                                    </HorizontalStackLayout>
+
+                                                </VerticalStackLayout>
+
+                                                <!-- Weather emoji -->
+                                                <Label Grid.Column="1"
+                                                       Text="{Binding CurrentWeatherEmoji}"
+                                                       FontSize="88"
+                                                       VerticalOptions="Center"
+                                                       HorizontalOptions="End" />
+                                            </Grid>
+
+                                            <!-- ═══════════  3 STAT CARDS  ═══════════ -->
+                                            <Grid ColumnDefinitions="*,*,*"
+                                                  ColumnSpacing="10"
+                                                  Margin="0,20,0,0">
+
+                                                <!-- Humidity -->
+                                                <Border Grid.Column="0"
+                                                        Style="{StaticResource StatCard}">
+                                                    <VerticalStackLayout Spacing="6"
+                                                                         HorizontalOptions="Center">
+                                                        <!-- Icon circle -->
+                                                        <Border BackgroundColor="#1A2DD4BF"
+                                                                StrokeThickness="0"
+                                                                StrokeShape="RoundRectangle 22"
+                                                                WidthRequest="44"
+                                                                HeightRequest="44"
+                                                                HorizontalOptions="Center">
+                                                            <Label Text="💧"
+                                                                   FontSize="20"
+                                                                   HorizontalOptions="Center"
+                                                                   VerticalOptions="Center" />
+                                                        </Border>
+                                                        <Label Text="{Binding HumidityDisplay}"
+                                                               TextColor="{StaticResource HumidTeal}"
+                                                               FontSize="16"
+                                                               FontAttributes="Bold"
+                                                               HorizontalTextAlignment="Center" />
+                                                        <Label Text="Humidity"
+                                                               TextColor="{StaticResource TextSecondary}"
+                                                               FontSize="11"
+                                                               HorizontalTextAlignment="Center" />
+                                                    </VerticalStackLayout>
+                                                </Border>
+
+                                                <!-- Wind -->
+                                                <Border Grid.Column="1"
+                                                        Style="{StaticResource StatCard}">
+                                                    <VerticalStackLayout Spacing="6"
+                                                                         HorizontalOptions="Center">
+                                                        <Border BackgroundColor="#1AA78BFA"
+                                                                StrokeThickness="0"
+                                                                StrokeShape="RoundRectangle 22"
+                                                                WidthRequest="44"
+                                                                HeightRequest="44"
+                                                                HorizontalOptions="Center">
+                                                            <Label Text="💨"
+                                                                   FontSize="20"
+                                                                   HorizontalOptions="Center"
+                                                                   VerticalOptions="Center" />
+                                                        </Border>
+                                                        <Label Text="{Binding WindSpeedDisplay}"
+                                                               TextColor="{StaticResource WindPurple}"
+                                                               FontSize="16"
+                                                               FontAttributes="Bold"
+                                                               HorizontalTextAlignment="Center" />
+                                                        <Label Text="Wind"
+                                                               TextColor="{StaticResource TextSecondary}"
+                                                               FontSize="11"
+                                                               HorizontalTextAlignment="Center" />
+                                                    </VerticalStackLayout>
+                                                </Border>
+
+                                                <!-- Current Temp -->
+                                                <Border Grid.Column="2"
+                                                        Style="{StaticResource StatCard}">
+                                                    <VerticalStackLayout Spacing="6"
+                                                                         HorizontalOptions="Center">
+                                                        <Border BackgroundColor="#1A38BDF8"
+                                                                StrokeThickness="0"
+                                                                StrokeShape="RoundRectangle 22"
+                                                                WidthRequest="44"
+                                                                HeightRequest="44"
+                                                                HorizontalOptions="Center">
+                                                            <Label Text="🌡️"
+                                                                   FontSize="20"
+                                                                   HorizontalOptions="Center"
+                                                                   VerticalOptions="Center" />
+                                                        </Border>
+                                                        <Label Text="{Binding CurrentTempDisplay}"
+                                                               TextColor="{StaticResource Cyan}"
+                                                               FontSize="16"
+                                                               FontAttributes="Bold"
+                                                               HorizontalTextAlignment="Center" />
+                                                        <Label Text="Feels"
+                                                               TextColor="{StaticResource TextSecondary}"
+                                                               FontSize="11"
+                                                               HorizontalTextAlignment="Center" />
+                                                    </VerticalStackLayout>
+                                                </Border>
+
+                                            </Grid>
+
+                                            <!-- ═══════════  SEARCH BAR  ═══════════ -->
+                                            <Border BackgroundColor="{StaticResource GlassBg}"
+                                                    Stroke="{StaticResource GlassBorder}"
+                                                    StrokeThickness="1"
+                                                    StrokeShape="RoundRectangle 24"
+                                                    Padding="14,4"
+                                                    Margin="0,20,0,0">
+                                                <Grid ColumnDefinitions="Auto,*"
+                                                      ColumnSpacing="10">
+                                                    <Label Grid.Column="0"
+                                                           Text="🔍"
+                                                           FontSize="16"
+                                                           VerticalOptions="Center"
+                                                           Opacity="0.7" />
+                                                    <input:SfAutocomplete Grid.Column="1"
+                                                                          ItemsSource="{Binding CitySuggestions}"
+                                                                          Text="{Binding SelectedCity, Mode=TwoWay}"
+                                                                          ReturnCommand="{Binding SearchCommand}"
+                                                                          Placeholder="Search city…"
+                                                                          ClearButtonIconColor="{StaticResource TextSecondary}"
+                                                                          PlaceholderColor="{StaticResource TextTertiary}"
+                                                                          TextColor="{StaticResource TextPrimary}"
+                                                                          MaxDropDownHeight="200"
+                                                                          DropDownBackground="#102A43"
+                                                                          DropDownItemTextColor="White"
+                                                                          DropDownStroke="#30FFFFFF"
+                                                                          DropDownStrokeThickness="2"
+                                                                          SelectionChanged="SfAutocomplete_SelectionChanged"
+                                                                          ShowBorder="False"
+                                                                          SelectionTextHighlightColor="#4A6580"
+                                                                          SelectedDropDownItemBackground="#1AFFFFFF"
+                                                                          BackgroundColor="Transparent" />
+                                                </Grid>
+                                            </Border>
+
+                                            <!-- Error banner -->
+                                            <Border IsVisible="{Binding HasError}"
+                                                    BackgroundColor="#22F87171"
+                                                    Stroke="#40F87171"
+                                                    StrokeThickness="1"
+                                                    StrokeShape="RoundRectangle 12"
+                                                    Padding="14,10"
+                                                    Margin="0,12,0,0">
+                                                <Label Text="{Binding ErrorMessage}"
+                                                       TextColor="#F87171"
+                                                       FontSize="12"
+                                                       HorizontalTextAlignment="Center" />
+                                            </Border>
+                                        </VerticalStackLayout>
+                                    </Grid>
+
+                                    <!-- ═══════════════  CONTENT  ═════════════════ -->
+                                    <VerticalStackLayout IsVisible="{Binding IsContentVisible}"
+                                                         Spacing="0">
+
+                                        <!-- ────── Temperature Trend ────── -->
+                                        <Label Text="Temperature Trend"
+                                               Style="{StaticResource SectionHead}" />
+
+                                        <Border Style="{StaticResource Card}"
+                                                Padding="12,14">
+                                            <chart:SfCartesianChart HeightRequest="165"
+                                                                    BackgroundColor="Transparent"
+                                                                    EnableSideBySideSeriesPlacement="False">
+
+                                                <chart:SfCartesianChart.XAxes>
+                                                    <chart:CategoryAxis ShowMajorGridLines="False"
+                                                                        EdgeLabelsDrawingMode="Fit">
+                                                        <chart:CategoryAxis.LabelStyle>
+                                                            <chart:ChartAxisLabelStyle TextColor="{StaticResource TextSecondary}"
+                                                                                       FontSize="11" />
+                                                        </chart:CategoryAxis.LabelStyle>
+                                                        <chart:CategoryAxis.AxisLineStyle>
+                                                            <chart:ChartLineStyle Stroke="#15FFFFFF"
+                                                                                  StrokeWidth="1" />
+                                                        </chart:CategoryAxis.AxisLineStyle>
+                                                    </chart:CategoryAxis>
+                                                </chart:SfCartesianChart.XAxes>
+
+                                                <chart:SfCartesianChart.YAxes>
+                                                    <chart:NumericalAxis IsVisible="False"
+                                                                         Minimum="0"
+                                                                         Maximum="45"
+                                                                         ShowMajorGridLines="True">
+                                                        <chart:NumericalAxis.MajorGridLineStyle>
+                                                            <chart:ChartLineStyle Stroke="#08FFFFFF"
+                                                                                  StrokeWidth="1" />
+                                                        </chart:NumericalAxis.MajorGridLineStyle>
+                                                        <chart:NumericalAxis.AxisLineStyle>
+                                                            <chart:ChartLineStyle Stroke="Transparent"
+                                                                                  StrokeWidth="0" />
+                                                        </chart:NumericalAxis.AxisLineStyle>
+                                                    </chart:NumericalAxis>
+                                                </chart:SfCartesianChart.YAxes>
+
+                                                <!-- Area fill under line -->
+                                                <chart:SplineAreaSeries ItemsSource="{Binding HourlyForecasts}"
+                                                                        XBindingPath="TimeLabel"
+                                                                        YBindingPath="Temperature"
+                                                                        ShowDataLabels="True"
+                                                                        EnableAnimation="True"
+                                                                        Opacity="0.25">
+                                                    <chart:SplineAreaSeries.DataLabelSettings>
+                                                        <chart:CartesianDataLabelSettings UseSeriesPalette="False"
+                                                                                          LabelPlacement="Outer">
+                                                            <chart:CartesianDataLabelSettings.LabelStyle>
+                                                                <chart:ChartDataLabelStyle TextColor="#F0F8FF"
+                                                                                           FontSize="10"
+                                                                                           FontAttributes="Bold"
+                                                                                           LabelPadding="4" />
+                                                            </chart:CartesianDataLabelSettings.LabelStyle>
+                                                        </chart:CartesianDataLabelSettings>
+                                                    </chart:SplineAreaSeries.DataLabelSettings>
+                                                    <chart:SplineAreaSeries.Fill>
+                                                        <LinearGradientBrush StartPoint="0,0"
+                                                                             EndPoint="0,1">
+                                                            <GradientStop Color="#38BDF8"
+                                                                          Offset="0" />
+                                                            <GradientStop Color="Transparent"
+                                                                          Offset="1" />
+                                                        </LinearGradientBrush>
+                                                    </chart:SplineAreaSeries.Fill>
+                                                </chart:SplineAreaSeries>
+
+                                                <!-- Spline line + labels -->
+                                                <chart:SplineSeries ItemsSource="{Binding HourlyForecasts}"
+                                                                    XBindingPath="TimeLabel"
+                                                                    YBindingPath="Temperature"
+                                                                    EnableAnimation="True"
+                                                                    StrokeWidth="2.5"
+                                                                    ShowMarkers="True">
+                                                    <chart:SplineSeries.MarkerSettings>
+                                                        <chart:ChartMarkerSettings Type="Circle"
+                                                                                   Width="7"
+                                                                                   Height="7"
+                                                                                   Fill="#31f5eb"
+                                                                                   Stroke="#0B1C2D"
+                                                                                   StrokeWidth="1.5" />
+                                                    </chart:SplineSeries.MarkerSettings>
+                                                </chart:SplineSeries>
+                                            </chart:SfCartesianChart>
+                                        </Border>
+
+                                        <!-- ────── Next Hours ────── -->
+                                        <Label Text="Next 8 Hours"
+                                               Style="{StaticResource SectionHead}" />
+
+                                        <listview:SfListView ItemsSource="{Binding HourlyForecasts}"
+                                                             Orientation="Horizontal"
+                                                             ItemSize="80"
+                                                             HeightRequest="118"
+                                                             Margin="20,0,20,0"
+                                                             SelectionMode="None">
+                                            <listview:SfListView.ItemTemplate>
+                                                <DataTemplate x:DataType="models:HourlyForecast">
+                                                    <Border Style="{StaticResource HourlyCard}">
+                                                        <VerticalStackLayout Spacing="4"
+                                                                             HorizontalOptions="Center"
+                                                                             WidthRequest="56">
+                                                            <Label Text="{Binding TimeLabel}"
+                                                                   TextColor="{StaticResource TextSecondary}"
+                                                                   FontSize="11"
+                                                                   HorizontalTextAlignment="Center" />
+                                                            <Label Text="{Binding WeatherEmoji}"
+                                                                   FontSize="22"
+                                                                   HorizontalTextAlignment="Center" />
+                                                            <Label Text="{Binding TempDisplay}"
+                                                                   TextColor="{StaticResource TextPrimary}"
+                                                                   FontSize="14"
+                                                                   FontAttributes="Bold"
+                                                                   HorizontalTextAlignment="Center" />
+                                                            <Label Text="{Binding PrecipDisplay}"
+                                                                   TextColor="{StaticResource Cyan}"
+                                                                   FontSize="11"
+                                                                   HorizontalTextAlignment="Center" />
+                                                        </VerticalStackLayout>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </listview:SfListView.ItemTemplate>
+                                        </listview:SfListView>
+
+                                        <!-- ────── Today's Range ────── -->
+                                        <Label Text="Today's Range"
+                                               Style="{StaticResource SectionHead}" />
+
+                                        <Border Style="{StaticResource Card}"
+                                                Margin="20,10,20,10">
+                                            <VerticalStackLayout Spacing="10">
+                                                <Grid ColumnDefinitions="Auto,*,Auto"
+                                                      ColumnSpacing="12">
+                                                    <BoxView Grid.Column="0"
+                                                             WidthRequest="0"
+                                                             Color="Transparent" />
+                                                    <VerticalStackLayout Grid.Column="1"
+                                                                         Spacing="6"
+                                                                         VerticalOptions="Center">
+                                                        <!-- Progress with gradient track and positioned thumb + label above -->
+                                                        <AbsoluteLayout HeightRequest="40"
+                                                                        VerticalOptions="Center"
+                                                                        Margin="0,2,0,0">
+                                                            <!-- Track + Progress -->
+                                                            <progressbar:SfLinearProgressBar AbsoluteLayout.LayoutBounds="0,0,1,1"
+                                                                                             AbsoluteLayout.LayoutFlags="All"
+                                                                                             Progress="{Binding TempProgressValue}"
+                                                                                             Minimum="0"
+                                                                                             Maximum="100"
+                                                                                             HeightRequest="10"
+                                                                                             ProgressCornerRadius="0"
+                                                                                             TrackCornerRadius="10"
+                                                                                             ProgressHeight="10"
+                                                                                             AnimationDuration="900">
+                                                                <progressbar:SfLinearProgressBar.TrackFill>
+                                                                    <SolidColorBrush Color="#1FFFFFFF" />
+                                                                </progressbar:SfLinearProgressBar.TrackFill>
+                                                                <progressbar:SfLinearProgressBar.ProgressFill>
+                                                                    <LinearGradientBrush StartPoint="0,0"
+                                                                                         EndPoint="1,0">
+                                                                        <GradientStop Color="#36D1E3"
+                                                                                      Offset="0" />
+                                                                        <GradientStop Color="#F5A56B"
+                                                                                      Offset="1" />
+                                                                    </LinearGradientBrush>
+                                                                </progressbar:SfLinearProgressBar.ProgressFill>
+                                                            </progressbar:SfLinearProgressBar>
+
+                                                            <!-- Positioned container: label above progress -->
+                                                            <VerticalStackLayout AbsoluteLayout.LayoutFlags="PositionProportional"
+                                                                                 AbsoluteLayout.LayoutBounds="{Binding TempProgressValue, Converter={StaticResource PercentToRect}, ConverterParameter='72,18,0'}"
+                                                                                 Spacing="2"
+                                                                                 HorizontalOptions="Center"
+                                                                                 VerticalOptions="Start">
+                                                                <Label Text="{Binding CurrentTemperature, StringFormat='C : {0:F0}°'}"
+                                                                       TextColor="White"
+                                                                       FontSize="11"
+                                                                       FontAttributes="Bold"
+                                                                       HorizontalTextAlignment="Center"
+                                                                       HorizontalOptions="Center" />
+                                                            </VerticalStackLayout>
+                                                        </AbsoluteLayout>
+                                                    </VerticalStackLayout>
+                                                    <!-- Right-aligned L/H compact labels -->
+                                                    <HorizontalStackLayout Grid.Column="2"
+                                                                           Spacing="8"
+                                                                           VerticalOptions="Center"
+                                                                           HorizontalOptions="End">
+                                                        <HorizontalStackLayout Spacing="2"
+                                                                               VerticalOptions="Center">
+                                                            <Label Text="L :"
+                                                                   TextColor="{StaticResource TextSecondary}"
+                                                                   FontSize="12" />
+                                                            <Label Text="{Binding LowTemperature, StringFormat='{0:F0}°'}"
+                                                                   TextColor="{StaticResource TempWhite}"
+                                                                   FontSize="12"
+                                                                   FontAttributes="Bold" />
+                                                        </HorizontalStackLayout>
+                                                        <HorizontalStackLayout Spacing="4"
+                                                                               VerticalOptions="Center">
+                                                            <Label Text="H :"
+                                                                   TextColor="{StaticResource TextSecondary}"
+                                                                   FontSize="12" />
+                                                            <Label Text="{Binding HighTemperature, StringFormat='{0:F0}°'}"
+                                                                   TextColor="{StaticResource TempWhite}"
+                                                                   FontSize="12"
+                                                                   FontAttributes="Bold" />
+                                                        </HorizontalStackLayout>
+                                                    </HorizontalStackLayout>
+                                                </Grid>
+                                            </VerticalStackLayout>
+                                        </Border>
+                                    </VerticalStackLayout>
+                                </VerticalStackLayout>
+                            </ScrollView>
+                        </ptr:SfPullToRefresh.PullableContent>
+                    </ptr:SfPullToRefresh>
+                </tabview:SfTabItem.Content>
+            </tabview:SfTabItem>
+
+            <!-- ══════════════════════════════  7 DAYS TAB  ══════════════════════════════ -->
+            <tabview:SfTabItem Header="  Next 6 Days  "
+                               TextColor="{StaticResource Cyan}"
+                               FontSize="13"
+                               FontAttributes="Bold">
+                <tabview:SfTabItem.Content>
+                    <ScrollView>
+                        <VerticalStackLayout Spacing="0">
+
+                            <!-- ────── Weekly Column Chart ────── -->
+                            <Label Text="Weekly Overview"
+                                   Style="{StaticResource SectionHead}" />
+
+                            <Border Style="{StaticResource Card}"
+                                    Padding="12,14">
+                                <chart:SfCartesianChart HeightRequest="200"
+                                                        BackgroundColor="Transparent">
+                                    <chart:SfCartesianChart.Legend>
+                                        <chart:ChartLegend>
+                                            <chart:ChartLegend.LabelStyle>
+                                                <chart:ChartLegendLabelStyle TextColor="White"
+                                                                             Margin="5"
+                                                                             FontSize="18"
+                                                                             FontAttributes="Bold" />
+                                            </chart:ChartLegend.LabelStyle>
+                                        </chart:ChartLegend>
+                                    </chart:SfCartesianChart.Legend>
+
+                                    <chart:SfCartesianChart.XAxes>
+                                        <chart:CategoryAxis ShowMajorGridLines="False">
+                                            <chart:CategoryAxis.LabelStyle>
+                                                <chart:ChartAxisLabelStyle TextColor="{StaticResource TextSecondary}"
+                                                                           FontSize="11" />
+                                            </chart:CategoryAxis.LabelStyle>
+                                            <chart:CategoryAxis.AxisLineStyle>
+                                                <chart:ChartLineStyle Stroke="#15FFFFFF"
+                                                                      StrokeWidth="1" />
+                                            </chart:CategoryAxis.AxisLineStyle>
+                                        </chart:CategoryAxis>
+                                    </chart:SfCartesianChart.XAxes>
+
+                                    <chart:SfCartesianChart.YAxes>
+                                        <chart:NumericalAxis IsVisible="False"
+                                                             ShowMajorGridLines="True">
+                                            <chart:NumericalAxis.MajorGridLineStyle>
+                                                <chart:ChartLineStyle Stroke="#08FFFFFF"
+                                                                      StrokeWidth="1" />
+                                            </chart:NumericalAxis.MajorGridLineStyle>
+                                            <chart:NumericalAxis.AxisLineStyle>
+                                                <chart:ChartLineStyle Stroke="Transparent"
+                                                                      StrokeWidth="0" />
+                                            </chart:NumericalAxis.AxisLineStyle>
+                                        </chart:NumericalAxis>
+                                    </chart:SfCartesianChart.YAxes>
+
+                                    <!-- High (Max) temperature per day -->
+                                    <chart:ColumnSeries ItemsSource="{Binding DailyForecasts}"
+                                                        XBindingPath="DayName"
+                                                        YBindingPath="MaxTemperature"
+                                                        Label="High"
+                                                        Spacing="0.5"
+                                                        EnableAnimation="True"
+                                                        CornerRadius="8"
+                                                        ShowDataLabels="True">
+                                        <chart:ColumnSeries.Fill>
+                                            <LinearGradientBrush StartPoint="0,0"
+                                                                 EndPoint="0,1">
+                                                <GradientStop Color="#F87171"
+                                                              Offset="0" />
+                                                <GradientStop Color="#FCA5A5"
+                                                              Offset="1" />
+                                            </LinearGradientBrush>
+                                        </chart:ColumnSeries.Fill>
+                                        <chart:ColumnSeries.DataLabelSettings>
+                                            <chart:CartesianDataLabelSettings UseSeriesPalette="False"
+                                                                              LabelPlacement="Outer">
+                                                <chart:CartesianDataLabelSettings.LabelStyle>
+                                                    <chart:ChartDataLabelStyle TextColor="#F0F8FF"
+                                                                               FontSize="10"
+                                                                               FontAttributes="Bold" />
+                                                </chart:CartesianDataLabelSettings.LabelStyle>
+                                            </chart:CartesianDataLabelSettings>
+                                        </chart:ColumnSeries.DataLabelSettings>
+                                    </chart:ColumnSeries>
+
+                                    <!-- Average temperature per day -->
+                                    <chart:ColumnSeries ItemsSource="{Binding DailyForecasts}"
+                                                        XBindingPath="DayName"
+                                                        YBindingPath="AvgTemperature"
+                                                        Label="Average"
+                                                        Spacing="0.5"
+                                                        EnableAnimation="True"
+                                                        CornerRadius="8"
+                                                        ShowDataLabels="True">
+                                        <chart:ColumnSeries.Fill>
+                                            <LinearGradientBrush StartPoint="0,0"
+                                                                 EndPoint="0,1">
+                                                <GradientStop Color="#60A5FA"
+                                                              Offset="0" />
+                                                <GradientStop Color="#93C5FD"
+                                                              Offset="1" />
+                                            </LinearGradientBrush>
+                                        </chart:ColumnSeries.Fill>
+                                        <chart:ColumnSeries.DataLabelSettings>
+                                            <chart:CartesianDataLabelSettings UseSeriesPalette="False"
+                                                                              LabelPlacement="Outer">
+                                                <chart:CartesianDataLabelSettings.LabelStyle>
+                                                    <chart:ChartDataLabelStyle TextColor="#F0F8FF"
+                                                                               FontSize="10"
+                                                                               FontAttributes="Bold" />
+                                                </chart:CartesianDataLabelSettings.LabelStyle>
+                                            </chart:CartesianDataLabelSettings>
+                                        </chart:ColumnSeries.DataLabelSettings>
+                                    </chart:ColumnSeries>
+                                </chart:SfCartesianChart>
+                            </Border>
+
+                            <!-- ────── 7-Day Forecast Rows ────── -->
+                            <Label Text="7-Day Forecast"
+                                   Style="{StaticResource SectionHead}" />
+
+                            <VerticalStackLayout Margin="20,0,20,10"
+                                                 Spacing="10"
+                                                 BindableLayout.ItemsSource="{Binding DailyForecasts}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="models:DailyForecast">
+
+                                        <badge:SfBadgeView HorizontalOptions="Fill"
+                                                           BadgeText="{Binding BadgeText}">
+                                            <badge:SfBadgeView.BadgeSettings>
+                                                <badge:BadgeSettings Background="#F87171"
+                                                                     TextColor="White"
+                                                                     BadgeAlignment="End"
+                                                                     CornerRadius="6"
+                                                                     FontSize="9"
+                                                                     IsVisible="{Binding IsHottestDay}" />
+                                            </badge:SfBadgeView.BadgeSettings>
+
+                                            <Border Style="{StaticResource DayCard}">
+                                                <Grid ColumnDefinitions="48,*,Auto"
+                                                      ColumnSpacing="14">
+
+                                                    <!-- Emoji in pill -->
+                                                    <Border Grid.Column="0"
+                                                            BackgroundColor="{StaticResource GlassBgStrong}"
+                                                            StrokeThickness="0"
+                                                            StrokeShape="RoundRectangle 14"
+                                                            WidthRequest="48"
+                                                            HeightRequest="48"
+                                                            HorizontalOptions="Center"
+                                                            VerticalOptions="Center">
+                                                        <Label Text="{Binding WeatherEmoji}"
+                                                               FontSize="26"
+                                                               HorizontalOptions="Center"
+                                                               VerticalOptions="Center" />
+                                                    </Border>
+
+                                                    <!-- Day name + description + date -->
+                                                    <VerticalStackLayout Grid.Column="1"
+                                                                         Spacing="2"
+                                                                         VerticalOptions="Center">
+                                                        <Label Text="{Binding DayName}"
+                                                               TextColor="{StaticResource TextPrimary}"
+                                                               FontSize="15"
+                                                               FontAttributes="Bold" />
+                                                        <Label Text="{Binding Description}"
+                                                               TextColor="{StaticResource TextSecondary}"
+                                                               FontSize="12" />
+                                                        <Label Text="{Binding DateLabel}"
+                                                               TextColor="{StaticResource TextSecondary}"
+                                                               FontSize="11" />
+                                                    </VerticalStackLayout>
+
+                                                    <!-- High / Low -->
+                                                    <VerticalStackLayout Grid.Column="2"
+                                                                         Spacing="4"
+                                                                         VerticalOptions="Center"
+                                                                         HorizontalOptions="End">
+                                                        <Label Text="{Binding MaxTemperature, StringFormat='{0:F0}°'}"
+                                                               TextColor="{StaticResource HighRed}"
+                                                               FontSize="16"
+                                                               FontAttributes="Bold"
+                                                               HorizontalTextAlignment="End" />
+                                                        <Label Text="{Binding MinTemperature, StringFormat='{0:F0}°'}"
+                                                               TextColor="{StaticResource LowBlue}"
+                                                               FontSize="13"
+                                                               HorizontalTextAlignment="End" />
+                                                    </VerticalStackLayout>
+                                                </Grid>
+                                            </Border>
+                                        </badge:SfBadgeView>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
+                        </VerticalStackLayout>
+                    </ScrollView>
+                </tabview:SfTabItem.Content>
+            </tabview:SfTabItem>
+        </tabview:SfTabView>
+
+        <!-- ═══════════════════════════  LOADING OVERLAY  ═══════════════════════════════ -->
+        <Grid IsVisible="{Binding IsLoading}"
+              BackgroundColor="{StaticResource Overlay}">
+            <VerticalStackLayout HorizontalOptions="Center"
+                                 VerticalOptions="Center"
+                                 Spacing="16">
+                <badge:SfBusyIndicator IsRunning="{Binding IsLoading}"
+                                       AnimationType="CircularMaterial"
+                                       IndicatorColor="{StaticResource Cyan}"
+                                       HeightRequest="44"
+                                       WidthRequest="44" />
+                <Label Text="Loading weather…"
+                       TextColor="{StaticResource TextSecondary}"
+                       FontSize="13"
+                       HorizontalTextAlignment="Center" />
+            </VerticalStackLayout>
+        </Grid>
+    </Grid>
+</ContentPage>
